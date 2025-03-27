@@ -143,7 +143,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>H:\cpp\dependences\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <!-- Add necessary FLTK release libs, e.g., fltk.lib, fltkimages.lib -->
-      <AdditionalDependencies>fltk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fltk.lib;fltk_images.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

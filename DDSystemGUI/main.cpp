@@ -16,6 +16,7 @@
 #include <stdexcept> // For std::runtime_error
 #include <vector>
 #include <iostream> // For cerr
+#include <windows.h> // 用于文件检查
 #pragma execution_character_set("utf-8")
 
 // --- Custom Color Scheme ---
@@ -39,6 +40,63 @@ const char* DDP3_UNPACK_EXE = "lib\\DDP3_unpack_wchar.exe";
 // --- Global Widgets ---
 Fl_Text_Display* output_display = nullptr;
 Fl_Text_Buffer* output_buffer = nullptr;
+
+// --- 检查可执行程序是否存在 ---
+bool file_exists(const char* path) {
+    DWORD fileAttributes = GetFileAttributesA(path);
+    return (fileAttributes != INVALID_FILE_ATTRIBUTES && 
+            !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+void check_executables() {
+    if (output_buffer && output_display) {
+        output_buffer->append("正在检查必要的可执行程序...\n");
+        
+        struct ExeInfo {
+            const char* path;
+            const char* name;
+            bool found;
+        };
+        
+        ExeInfo exes[] = {
+            { DDP2_PACK_EXE, "DDP2打包程序", false },
+            { DDP2_UNPACK_EXE, "DDP2解包程序", false },
+            { DDP3_PACK_EXE, "DDP3打包程序(wchar)", false },
+            { DDP3_UNPACK_EXE, "DDP3解包程序(wchar)", false }
+        };
+        
+        int missing_count = 0;
+        
+        for (auto& exe : exes) {
+            exe.found = file_exists(exe.path);
+            if (exe.found) {
+                output_buffer->append("✅ ");
+                output_buffer->append(exe.name);
+                output_buffer->append(" 已找到: ");
+            } else {
+                output_buffer->append("❌ ");
+                output_buffer->append(exe.name);
+                output_buffer->append(" 未找到: ");
+                missing_count++;
+            }
+            output_buffer->append(exe.path);
+            output_buffer->append("\n");
+        }
+        
+        output_buffer->append("\n");
+        if (missing_count == 0) {
+            output_buffer->append("✨ 所有程序检查完毕，系统准备就绪！\n");
+        } else {
+            output_buffer->append("⚠️ 警告：有 ");
+            output_buffer->append(std::to_string(missing_count).c_str());
+            output_buffer->append(" 个程序未找到，部分功能可能无法使用。\n");
+            output_buffer->append("请确保所有可执行文件都在正确的位置。\n");
+        }
+        output_buffer->append("\n");
+        
+        output_display->scroll(output_buffer->length(), 0); // 滚动到底部
+    }
+}
 
 // --- Helper Function to Execute Command and Capture Output ---
 std::string execute_command(const std::string& command) {
@@ -382,6 +440,9 @@ int main(int argc, char **argv) {
     window->end();
     window->resizable(output_display); // Allow resizing, affecting the output area
     window->show(argc, argv);
+    
+    // 程序启动后检查可执行文件
+    check_executables();
 
     return Fl::run();
 }
